@@ -1,0 +1,95 @@
+Qué hace let input = '';
+Declara una variable llamada input y la inicializa como una cadena vacía ('').
+Esta variable se usa para acumular los datos que llegan desde la entrada estándar (stdin), es decir, lo que escribes en la terminal.
+Cómo funciona en tu código
+Cuando escribes algo en la terminal, el evento process.stdin.on('data', chunk => { ... }) se activa y recibe un fragmento (chunk) de datos.
+Cada fragmento se concatena a la variable input con input += chunk;, así vas juntando todo lo que escribiste.
+Cuando terminas de escribir y cierras la entrada (por ejemplo, con Ctrl+D), se activa el evento process.stdin.on('end', () => { ... }).
+En ese momento, input contiene todo el texto que ingresaste, y se usa para construir la ruta del archivo.
+Resumen
+let input = ''; crea una variable para guardar lo que escribes en la terminal.
+Se va llenando con cada fragmento de datos que llega.
+Al final, contiene la ruta que quieres usar para leer el archivo JSON.
+¿Quieres que te explique cómo funciona el manejo de eventos stdin o cómo usar esa ruta para leer el archivo?
+
+y como le agrego a esto fs readFileSync
+
+Monica, para agregar fs.readFileSync dentro del evento process.stdin.on('end', ...) y cumplir con el ejercicio, hazlo así:
+
+js
+
+
+const fs = require('fs');
+const path = require('path');
+let input = '';
+process.stdin.on('data', chunk => {
+  input += chunk;
+});
+process.stdin.on('end', () => {
+  const relativePath = input.trim();
+  const absolutePath = path.join(__dirname, relativePath);
+  try {
+    // Leer archivo JSON de forma síncrona
+    const data = fs.readFileSync(absolutePath, 'utf8');
+    const json = JSON.parse(data);
+    // Incrementar version o crearla si no existe
+    if (typeof json.version === 'number') {
+      json.version += 1;
+    } else {
+      json.version = 1;
+    }
+    // Guardar archivo actualizado
+    fs.writeFileSync(absolutePath, JSON.stringify(json, null, 2), 'utf8');
+    // Imprimir nuevo valor de version
+    console.log(json.version);
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
+});
+```__
+Cómo usarlo:
+Ejecuta el script sin argumentos:
+bash
+
+
+node index.js
+Escribe la ruta relativa del archivo JSON, por ejemplo:
+
+
+settings.json
+Presiona Enter y luego Ctrl+Z (Windows) o Ctrl+D (Linux/Mac) para indicar fin de entrada.
+El script leerá el archivo, incrementará la versión, guardará y mostrará el nuevo valor.
+const fs = require('fs');
+const path = require('path');
+
+let input = '';
+process.stdin.on('data', chunk => {
+  input += chunk;
+});
+
+process.stdin.on('end', () => {
+  const relativePath = input.trim();
+  const absolutePath = path.join(__dirname, relativePath);
+
+  if (!fs.existsSync(absolutePath)) {
+    console.error('Archivo no encontrado:', absolutePath);
+    return;
+  }
+
+  try {
+    const data = fs.readFileSync(absolutePath, 'utf8');
+    const json = JSON.parse(data);
+
+    if (typeof json.version === 'number') {
+      json.version += 1;
+    } else {
+      json.version = 1;
+    }
+
+    fs.writeFileSync(absolutePath, JSON.stringify(json, null, 2), 'utf8');
+    console.log(json.version);
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
+});
+```__
